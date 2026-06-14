@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Jogo da Forca</string>
+
+    <string name="titulo_boas_vindas">Jogo da Forca</string>
+    <string name="hint_nickname">Digite seu Nickname</string>
+    <string name="label_selecione_avatar">Escolha seu Avatar:</string>
+    <string name="btn_iniciar_jogo">Iniciar Partida</string>
+    <string name="erro_nick_vazio">Por favor, insira um nickname!</string>
+
+    <string name="label_jogador">Jogador: </string>
+    <string name="label_tempo">Tempo restante: </string>
+    <string name="label_pontuacao">Pontuação: 0</string>
+    <string name="btn_reiniciar">Reiniciar</string>
+    <string name="btn_sair">Sair</string>
+    <string name="desc_imagem_forca">Estado atual do boneco na forca</string>
+
+    <string name="titulo_cadastro">Cadastrar Nova Palavra</string>
+    <string name="hint_nova_palavra">Digite a palavra</string>
+    <string name="hint_categoria">Digite a categoria/tema</string>
+    <string name="btn_salvar_palavra">Salvar Palavra</string>
+    <string name="erro_cadastro_vazio">Preencha todos os campos!</string>
+</resources>
