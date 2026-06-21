@@ -1,51 +1,193 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.tools.com/tools"
-    android:layout_width="match_match"
+    android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp"
-    android:gravity="center"
+    android:background="#F9F9FC"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/tvTitulo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/titulo_boas_vindas"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:layout_mb="32dp"/>
+    <View
+        android:id="@+id/viewHeaderBackground"
+        android:layout_width="match_parent"
+        android:layout_height="280dp"
+        android:background="@android:color/holo_purple"
+        android:alpha="0.08"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
-    <EditText
-        android:id="@+id/etNickname"
+    <View
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:background="@android:color/holo_purple"
+        android:alpha="0.15"
+        android:rotation="45"
+        android:translationX="-30dp"
+        android:translationY="-30dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPainelCentral"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/hint_nickname"
-        android:inputType="textPersonName"
-        android:layout_marginBottom="24dp"/>
+        android:layout_marginStart="28dp"
+        android:layout_marginEnd="28dp"
+        app:cardCornerRadius="32dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:strokeWidth="0dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/btnIniciar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintVertical_bias="0.4">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/label_selecione_avatar"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="28dp"
+            android:gravity="center_horizontal">
 
-    <ImageButton
-        android:id="@+id/btnAvatar"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:scaleType="centerCrop"
-        android:src="@android:drawable/ic_menu_gallery"
-        android:contentDescription="@string/label_selecione_avatar"
-        android:layout_marginBottom="32dp"/>
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tvTitulo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Jogo da Forca"
+                android:textSize="30sp"
+                android:textStyle="bold"
+                android:textColor="#4A3780"
+                android:letterSpacing="0.02"
+                android:layout_marginBottom="28dp" />
 
-    <Button
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilNickname"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox" android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Digite seu Nickname"
+                app:hintTextColor="#4A3780"
+                app:boxStrokeColor="#4A3780"
+                app:boxCornerRadiusTopStart="16dp"
+                app:boxCornerRadiusTopEnd="16dp"
+                app:boxCornerRadiusBottomStart="16dp"
+                app:boxCornerRadiusBottomEnd="16dp"
+                app:startIconDrawable="@android:drawable/ic_menu_edit"
+                app:startIconTint="#4A3780"
+                android:layout_marginBottom="24dp">
+
+                <com.google.android.material.textfield.MaterialAutoCompleteTextView
+                    android:id="@+id/etNickname"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minHeight="54dp"
+                    android:inputType="textPersonName"
+                    android:textColor="#1C1C1E"
+                    android:textSize="16sp" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textview.MaterialTextView
+                android:id="@+id/tvLabelAvatar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Escolha seu Avatar:"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:textColor="#7C7C80"
+                android:layout_marginBottom="16dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:weightSum="3">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAvatar1"
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="37dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="#4A3780">
+                    <ImageButton
+                        android:id="@+id/btnAvatar1"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:background="?attr/selectableItemBackground"
+                        android:src="@drawable/shrek"
+                        android:contentDescription="Shrek" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAvatar2"
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="37dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="@android:color/transparent">
+                    <ImageButton
+                        android:id="@+id/btnAvatar2"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:background="?attr/selectableItemBackground"
+                        android:src="@drawable/sapo"
+                        android:contentDescription="Sapo" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardAvatar3"
+                    android:layout_width="74dp"
+                    android:layout_height="74dp"
+                    android:layout_margin="8dp"
+                    app:cardCornerRadius="37dp"
+                    app:cardElevation="2dp"
+                    app:strokeWidth="3dp"
+                    app:strokeColor="@android:color/transparent">
+                    <ImageButton
+                        android:id="@+id/btnAvatar3"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:background="?attr/selectableItemBackground"
+                        android:src="@drawable/zeca"
+                        android:contentDescription="Zeca Urubu" />
+                </com.google.android.material.card.MaterialCardView>
+
+            </LinearLayout>
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.button.MaterialButton
         android:id="@+id/btnIniciar"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/btn_iniciar_jogo"/>
+        android:minHeight="58dp"
+        android:text="Iniciar Partida"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        app:backgroundTint="#4A3780"
+        app:icon="@android:drawable/ic_media_play"
+        app:iconTint="@android:color/white"
+        app:iconGravity="textStart"
+        app:cornerRadius="18dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cardPainelCentral"
+        app:layout_constraintVertical_bias="0.8"/>
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
