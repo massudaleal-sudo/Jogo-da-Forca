@@ -98,7 +98,9 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         super.onCreate(bundleSucedido);
         setContentView(R.layout.activity_jogo);
 
-        dbHelper = new BancoDadosHelper(this);
+        dbHelper = new BancoDadosHelper(this); //conexao com bd
+
+        // executando as configurações iniciais obrigatorias do jogo
         inicializarComponentes();
         configurarHandlerTempo();
         criarCanalNotificacao();
@@ -112,7 +114,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             sensorProximidade = sensorManager.getDefaultSensor(Sensor.TYPE_PROXIMITY);
         }
 
-        configurarReceptorBateria();
+        configurarReceptorBateria(); // configura para ouvir o evento de bateria fraca
 
         // Recupera os dados empacotados vindos da MainActivity via Intent extras
         if (getIntent() != null && getIntent().hasExtra("PLAYER_NICK")) {
@@ -134,6 +136,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void inicializarComponentes() {
+        //mapeamendo os componentes no XML
         tvPalavraOculta = findViewById(R.id.tvPalavraOculta);
         ivForca = findViewById(R.id.ivForca);
         layoutTeclado = findViewById(R.id.llTecladoContainer);
@@ -144,31 +147,37 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         Button btnReiniciar = findViewById(R.id.btnReiniciar);
         Button btnSair = findViewById(R.id.btnSair);
 
+        // Definindo a ação do botão Reiniciar
         if (btnReiniciar != null) btnReiniciar.setOnClickListener(v -> {
             tempoSalvoAoPausar = -1;
             iniciarNovaPartida();
         });
+        // Definindo a ação do botão Sair
         if (btnSair != null) btnSair.setOnClickListener(v -> finish());
     }
 
-
+    // sistema de som e musica do jogo
     private void inicializarAudio() {
+        //musica de fundo da pasta raw
         mediaPlayerFundo = MediaPlayer.create(this, R.raw.musica_fundo);
         if (mediaPlayerFundo != null) {
-            mediaPlayerFundo.setLooping(true);
+            mediaPlayerFundo.setLooping(true); //deixando a musica em looping
             mediaPlayerFundo.setVolume(0.4f, 0.4f);
         }
 
+        //atributos tenicos do soundpool
         AudioAttributes atributosAudio = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_GAME)
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build();
 
+        // incializando o sounpool e preparando para carregar ate 5 sons simultaneos
         soundPoolEfeitos = new SoundPool.Builder()
                 .setMaxStreams(5)
                 .setAudioAttributes(atributosAudio)
                 .build();
 
+        //carregando sons de acerto e erro
         somAcertoId = soundPoolEfeitos.load(this, R.raw.som_acerto, 1);
         somErroId = soundPoolEfeitos.load(this, R.raw.som_erro, 1);
 
@@ -176,19 +185,21 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         soundPoolEfeitos.setOnLoadCompleteListener((soundPool, sampleId, status) -> sonsCarregados = (status == 0));
     }
 
+    //reproducao de efeito sonoro
     private void tocarEfeitoSonoro(int somId) {
         if (sonsCarregados && soundPoolEfeitos != null) {
             soundPoolEfeitos.play(somId, 1.0f, 1.0f, 1, 0, 1.0f);
         }
     }
 
-
+    // Configurando a ponte de comunicação que atualiza o cronômetro visual na tela
     private void configurarHandlerTempo() {
         handlerTempo = new Handler(Looper.getMainLooper()) {
             @Override
             public void handleMessage(@NonNull Message msg) {
                 super.handleMessage(msg);
 
+                //converter para o formato de relogio
                 int minutos = tempoRestanteSegundos / 60;
                 int segundos = tempoRestanteSegundos % 60;
                 String tempoFormatado = String.format(Locale.getDefault(), "%02d:%02d", minutos, segundos);
@@ -208,17 +219,19 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
     }
 
 
+    // Inicializando a Thread paralela que faz a contagem do tempo sem congelar a tela do usuário
     private void iniciarTemporizador() {
-        pararTemporizador();
+        pararTemporizador(); // para nao criar multiplos cronometros rodando juntos
 
         if (tempoSalvoAoPausar > 0) {
             tempoRestanteSegundos = tempoSalvoAoPausar;
             tempoSalvoAoPausar = -1; // Consome o tempo salvo
         } else {
-            tempoRestanteSegundos = 180;
+            tempoRestanteSegundos = 180; // se nao foi pausado no meio, cai aqui e inicia 3 min
         }
 
         tempoSendoContado = true;
+        // criacao de thread secundaria de background
         threadTempo = new Thread(() -> {
             while (tempoSendoContado && tempoRestanteSegundos > 0) {
                 try {
@@ -234,6 +247,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         threadTempo.start();
     }
 
+    // para e encerra a thread do cronometro
     private void pararTemporizador() {
         tempoSendoContado = false;
         if (threadTempo != null && threadTempo.isAlive()) {
@@ -241,6 +255,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    //preparando o cenario geral para comecar a partida do zero
     private void iniciarNovaPartida() {
         errosCometidos = 0;
         atualizarImagemForca();
@@ -252,6 +267,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             categoriaSorteada = "Tecnologia";
         }
 
+        //criando mascara da palavra oculta
         progressoPalavra = new StringBuilder();
         for (int i = 0; i < palavraSorteada.length(); i++) {
             progressoPalavra.append("_");
@@ -330,7 +346,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         tvPalavraOculta.setText(exibicaoComEspacos.toString().trim());
     }
 
-
+    //craindo teclado virtual
     private void gerarTecladoDinamico() {
         if (layoutTeclado == null) return;
 
@@ -350,6 +366,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             containerLinha.setOrientation(LinearLayout.HORIZONTAL);
             containerLinha.setLayoutParams(parametrosLinha);
 
+            // Laços para construir linha por linha e botão por botão de cada letra
             for (int i = 0; i < staticLinha.length(); i++) {
                 final char letra = staticLinha.charAt(i);
                 Button btnLetra = new Button(this);
@@ -540,7 +557,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
-
+    // auxilio do chatgpt
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -577,6 +594,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+    // auxilio do chatgpt
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
