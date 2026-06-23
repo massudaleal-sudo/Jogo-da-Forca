@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+
 public class JogoActivity extends AppCompatActivity implements SensorEventListener {
 
     private static final String TAG = "JogoActivity";
@@ -75,6 +76,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
     private boolean tempoSendoContado = false;
     private int tempoRestanteSegundos = 180;
     private int tempoSalvoAoPausar = -1;
+
     private MediaPlayer mediaPlayerFundo;
     private SoundPool soundPoolEfeitos;
     private int somAcertoId, somErroId;
@@ -103,6 +105,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         verificarPermissaoNotificacao();
         inicializarAudio();
 
+        // Inicialização dos serviços de sensores do Android
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         if (sensorManager != null) {
             acelerometro = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -111,6 +114,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
 
         configurarReceptorBateria();
 
+        // Recupera os dados empacotados vindos da MainActivity via Intent extras
         if (getIntent() != null && getIntent().hasExtra("PLAYER_NICK")) {
             nickname = getIntent().getStringExtra("PLAYER_NICK");
             avatarId = getIntent().getIntExtra("PLAYER_AVATAR", android.R.drawable.ic_menu_gallery);
@@ -141,11 +145,12 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         Button btnSair = findViewById(R.id.btnSair);
 
         if (btnReiniciar != null) btnReiniciar.setOnClickListener(v -> {
-            tempoSalvoAoPausar = -1; // Força resetar para 3 minutos ao clicar manualmente
+            tempoSalvoAoPausar = -1;
             iniciarNovaPartida();
         });
         if (btnSair != null) btnSair.setOnClickListener(v -> finish());
     }
+
 
     private void inicializarAudio() {
         mediaPlayerFundo = MediaPlayer.create(this, R.raw.musica_fundo);
@@ -167,6 +172,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         somAcertoId = soundPoolEfeitos.load(this, R.raw.som_acerto, 1);
         somErroId = soundPoolEfeitos.load(this, R.raw.som_erro, 1);
 
+        // Listener assíncrono para garantir que o áudio só toque após estar 100% carregado na memória RAM
         soundPoolEfeitos.setOnLoadCompleteListener((soundPool, sampleId, status) -> sonsCarregados = (status == 0));
     }
 
@@ -175,6 +181,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             soundPoolEfeitos.play(somId, 1.0f, 1.0f, 1, 0, 1.0f);
         }
     }
+
 
     private void configurarHandlerTempo() {
         handlerTempo = new Handler(Looper.getMainLooper()) {
@@ -190,6 +197,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
                     tvCronometro.setText(tempoFormatado);
                 }
 
+                // Condição de derrota por tempo esgotado
                 if (tempoRestanteSegundos <= 0) {
                     pararTemporizador();
                     tocarEfeitoSonoro(somErroId);
@@ -199,12 +207,13 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         };
     }
 
+
     private void iniciarTemporizador() {
         pararTemporizador();
 
         if (tempoSalvoAoPausar > 0) {
             tempoRestanteSegundos = tempoSalvoAoPausar;
-            tempoSalvoAoPausar = -1;
+            tempoSalvoAoPausar = -1; // Consome o tempo salvo
         } else {
             tempoRestanteSegundos = 180;
         }
@@ -213,9 +222,9 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         threadTempo = new Thread(() -> {
             while (tempoSendoContado && tempoRestanteSegundos > 0) {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(1000); // Pausa a thread de background por 1 segundo
                     tempoRestanteSegundos--;
-                    handlerTempo.sendEmptyMessage(0);
+                    handlerTempo.sendEmptyMessage(0); // Dispara notificação de sinal para o Handler na UI Thread
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                     break;
@@ -237,6 +246,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         atualizarImagemForca();
         sortearPalavraDoBanco();
 
+        // Fallback defensivo para garantir a execução caso o banco esteja inacessível
         if (palavraSorteada == null || palavraSorteada.isEmpty()) {
             palavraSorteada = "ANDROID";
             categoriaSorteada = "Tecnologia";
@@ -257,9 +267,11 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         iniciarTemporizador();
     }
 
+
     private void sortearPalavraDoBanco() {
         try {
             SQLiteDatabase db = dbHelper.getReadableDatabase();
+            // Filtra palavras não resolvidas e embaralha o retorno trazendo apenas 1 linha
             Cursor cursor = db.rawQuery("SELECT " + BancoDadosHelper.COLUNA_PALAVRA + ", "
                     + BancoDadosHelper.COLUNA_CATEGORIA + " FROM "
                     + BancoDadosHelper.TABELA_PALAVRAS
@@ -276,25 +288,28 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
                 }
                 cursor.close();
             } else {
+                // Se o Cursor retornar nulo/vazio, significa que o jogador acertou todas as palavras do SQLite
                 if (cursor != null) cursor.close();
 
                 if (pontuacaoAtual > 0) {
                     dbHelper.salvarOuAtualizarPontuacao(nickname, avatarId, pontuacaoAtual);
                 }
 
+                // Reseta as flags para permitir um novo ciclo de jogo sem reinstalar o aplicativo
                 dbHelper.resetarTodasAsPalavras();
 
+                // Usa o Handler para inflar com segurança o Modal de Vitória Geral na Thread principal
                 new Handler(Looper.getMainLooper()).post(() -> {
                     com.google.android.material.dialog.MaterialAlertDialogBuilder conquistaDialog =
                             new com.google.android.material.dialog.MaterialAlertDialogBuilder(this);
 
-                    conquistaDialog.setTitle("🎉 PARABÉNS! VOCÊ ZEROU O JOGO! 🎉");
+                    conquistaDialog.setTitle(" PARABÉNS! VOCÊ ZEROU O JOGO! ");
                     conquistaDialog.setMessage(String.format(Locale.getDefault(),
-                            "Incrível, %s!\n\nVocê desvendou absolutamente TODAS as palavras do nosso banco de dados!\n\nSua pontuação atual de %d pontos foi salva no topo do Ranking Geral. 🏆\n\nA lista de palavras foi renovada. Pronto para manter o seu reinado?",
+                            "Incrível, %s!\n\nVocê desvendou absolutamente TODAS as palavras do nosso banco de dados!\n\nSua pontuação atual de %d pontos foi salva no topo do Ranking Geral. \n\nA lista de palavras foi renovada. Pronto para manter o seu reinado?",
                             nickname, pontuacaoAtual));
 
                     conquistaDialog.setCancelable(false);
-                    conquistaDialog.setPositiveButton("Continuar Jogando 🔥", (dialog, which) -> {
+                    conquistaDialog.setPositiveButton("Continuar Jogando ", (dialog, which) -> {
                         tempoSalvoAoPausar = -1;
                         sortearPalavraDoBanco();
                     });
@@ -315,16 +330,18 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         tvPalavraOculta.setText(exibicaoComEspacos.toString().trim());
     }
 
+
     private void gerarTecladoDinamico() {
         if (layoutTeclado == null) return;
 
-        layoutTeclado.removeAllViews();
+        layoutTeclado.removeAllViews(); // Limpa teclados de partidas anteriores
         String[] linhasLetras = {"ABCDEFGH", "IJKLMNOPQ", "RSTUVWXYZ"};
 
         LinearLayout.LayoutParams parametrosLinha = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
         parametrosLinha.setMargins(0, 4, 0, 4);
 
+        // Usa pesos (weight=1.0f) para garantir o perfeito alinhamento responsivo em qualquer resolução de tela
         LinearLayout.LayoutParams parametrosBotao = new LinearLayout.LayoutParams(0, 140, 1.0f);
         parametrosBotao.setMargins(4, 0, 4, 0);
 
@@ -343,7 +360,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
                 btnLetra.setTextSize(16f);
 
                 btnLetra.setOnClickListener(v -> {
-                    v.setEnabled(false);
+                    v.setEnabled(false); // Evita cliques duplicados na mesma letra
                     v.setBackgroundColor(android.graphics.Color.parseColor("#BDBDBD"));
                     processarPalpite(letra);
                 });
@@ -359,13 +376,14 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         return pattern.matcher(nfdNormalizedString).replaceAll("");
     }
 
+
     private void processarPalpite(char letraPalpite) {
         boolean acertou = false;
         String palavraSemAcento = removerAcentos(palavraSorteada);
 
         for (int i = 0; i < palavraSemAcento.length(); i++) {
             if (palavraSemAcento.charAt(i) == letraPalpite) {
-                progressoPalavra.setCharAt(i, palavraSorteada.charAt(i));
+                progressoPalavra.setCharAt(i, palavraSorteada.charAt(i)); // Preserva acentos na exibição visual
                 acertou = true;
             }
         }
@@ -373,9 +391,11 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         if (acertou) {
             tocarEfeitoSonoro(somAcertoId);
             atualizarExibicaoPalavra();
+
+            // Condição de vitória na rodada
             if (!progressoPalavra.toString().contains("_")) {
                 pararTemporizador();
-                dbHelper.marcarComoAcertada(palavraSorteada);
+                dbHelper.marcarComoAcertada(palavraSorteada); // Altera flag no SQLite
 
                 pontuacaoAtual += 100;
                 if (tvPontuacao != null) {
@@ -388,12 +408,15 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             tocarEfeitoSonoro(somErroId);
             errosCometidos++;
             atualizarImagemForca();
+
+            // Condição de derrota por limite de erros atingido
             if (errosCometidos >= MAX_ERROS) {
                 pararTemporizador();
                 mostrarDialogoFimDeJogo(false);
             }
         }
     }
+
 
     private void mostrarDialogoFimDeJogo(boolean venceu) {
         if (dialogoEstaAberto) return;
@@ -405,10 +428,10 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
 
         String mensagemResultado;
         if (venceu) {
-            builder.setTitle("🏆 Sobrevivência Garantida!");
+            builder.setTitle(" Sobrevivência Garantida!");
             mensagemResultado = String.format(Locale.getDefault(), "Muito bem, %s!\nPalavra: %s\nSua pontuação nesta rodada: %d", nickname, palavraSorteada, pontuacaoAtual);
         } else {
-            builder.setTitle("💀 Fim da Linha...");
+            builder.setTitle(" Fim da Linha...");
             mensagemResultado = String.format(Locale.getDefault(), "A forca venceu!\nPalavra oculta: %s\nSua pontuação foi zerada.", palavraSorteada);
             pontuacaoAtual = 0;
             if (tvPontuacao != null) {
@@ -416,6 +439,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             }
         }
 
+        // Criação de containers e inserção do sub-banco (Ranking) dinamicamente no Modal
         LinearLayout layoutDialogo = new LinearLayout(this);
         layoutDialogo.setOrientation(LinearLayout.VERTICAL);
         layoutDialogo.setPadding(45, 30, 45, 30);
@@ -427,7 +451,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         layoutDialogo.addView(tvMensagem);
 
         TextView tvTituloRanking = new TextView(this);
-        tvTituloRanking.setText("\n📊 Classificação Geral:");
+        tvTituloRanking.setText("\n Classificação Geral:");
         tvTituloRanking.setTextSize(15f);
         tvTituloRanking.setTypeface(null, android.graphics.Typeface.BOLD);
         tvTituloRanking.setTextColor(android.graphics.Color.parseColor("#4A3780"));
@@ -436,6 +460,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         ListView listViewRanking = new ListView(this);
         List<String> listaRanking = new ArrayList<>();
 
+        // Consulta do ranking no SQLite para exibição na lista
         Cursor cursor = dbHelper.obterTodosOsJogadores();
         if (cursor != null) {
             int posicao = 1;
@@ -457,6 +482,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             listaRanking.add("Nenhum recorde registrado ainda.");
         }
 
+        // Adapter para fazer a conversão da estrutura de String para a listagem visual do Android
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, listaRanking);
         listViewRanking.setAdapter(adapter);
 
@@ -466,7 +492,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         layoutDialogo.addView(listViewRanking);
 
         builder.setView(layoutDialogo);
-        builder.setCancelable(false);
+        builder.setCancelable(false); // Trava o modal (Evita fechar clicando fora)
 
         builder.setPositiveButton("Próxima Rodada", (dialog, which) -> {
             dialogoEstaAberto = false;
@@ -514,11 +540,12 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             long tempoAtual = System.currentTimeMillis();
-            if ((tempoAtual - ultimoTempoSensor) > 100) {
+            if ((tempoAtual - ultimoTempoSensor) > 100) { // Throttle de amostragem de 100ms para economia de processador
                 long diferencaTempo = (tempoAtual - ultimoTempoSensor);
                 ultimoTempoSensor = tempoAtual;
 
@@ -526,6 +553,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
                 float y = event.values[1];
                 float z = event.values[2];
 
+                // Cálculo matemático vetorial para descobrir a aceleração de agitação do aparelho
                 float velocidade = Math.abs(x + y + z - ultimaCoordenadaX - ultimaCoordenadaY - ultimaCoordenadaZ) / diferencaTempo * 10000;
 
                 if (velocidade > FORCA_CHACOALHAO) {
@@ -542,14 +570,16 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
 
         if (event.sensor.getType() == Sensor.TYPE_PROXIMITY) {
             float distancia = event.values[0];
+            // Se a distância medida for menor que o alcance máximo, significa que a mão cobriu o topo da tela
             if (distancia < event.sensor.getMaximumRange()) {
-                Toast.makeText(this, "💡 Dica de Mestre: Foque nas vogais primeiro!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, " Dica de Mestre: Foque nas vogais primeiro!", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
+
 
     private void verificarPermissaoNotificacao() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -561,16 +591,18 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+
     private void configurarReceptorBateria() {
         receptorBateriaBaixa = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 if (Intent.ACTION_BATTERY_LOW.equals(intent.getAction())) {
-                    dispararNotificacaoLocal();
+                    dispararNotificacaoLocal(); // Dispara alerta instantâneo
                 }
             }
         };
     }
+
 
     private void criarCanalNotificacao() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -588,9 +620,10 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
     private void dispararNotificacaoLocal() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            return;
+            return; // Aborta se o usuário não aceitou a permissão de Push
         }
 
+        // Construção estrutural da Notificação em estilo Heads-Up (Alerta flutuante prioritário)
         NotificationCompat.Builder construtorNotificacao = new NotificationCompat.Builder(this, CANAL_NOTIFICACAO_ID)
                 .setSmallIcon(android.R.drawable.stat_sys_warning)
                 .setContentTitle("Bateria Baixa!")
@@ -605,6 +638,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         }
     }
 
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -617,6 +651,7 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
             }
         }
 
+        // Tratamento de registro de Receiver para segurança
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             registerReceiver(receptorBateriaBaixa, new IntentFilter(Intent.ACTION_BATTERY_LOW), Context.RECEIVER_EXPORTED);
         } else {
@@ -630,30 +665,32 @@ public class JogoActivity extends AppCompatActivity implements SensorEventListen
         iniciarTemporizador();
     }
 
+
     @Override
     protected void onPause() {
         super.onPause();
-        tempoSalvoAoPausar = tempoRestanteSegundos;
+        tempoSalvoAoPausar = tempoRestanteSegundos; // Salva o segundo exato onde o jogo parou
         pararTemporizador();
 
-        if (sensorManager != null) sensorManager.unregisterListener(this);
-        unregisterReceiver(receptorBateriaBaixa);
+        if (sensorManager != null) sensorManager.unregisterListener(this); // Remove escuta dos sensores
+        unregisterReceiver(receptorBateriaBaixa); // Remove escuta de bateria
 
         if (mediaPlayerFundo != null && mediaPlayerFundo.isPlaying()) {
             mediaPlayerFundo.pause();
         }
     }
 
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         pararTemporizador();
         if (mediaPlayerFundo != null) {
-            mediaPlayerFundo.release();
+            mediaPlayerFundo.release(); // Libera recurso nativo de mídia
             mediaPlayerFundo = null;
         }
         if (soundPoolEfeitos != null) {
-            soundPoolEfeitos.release();
+            soundPoolEfeitos.release(); // Libera blocos de memória PCM
             soundPoolEfeitos = null;
         }
     }

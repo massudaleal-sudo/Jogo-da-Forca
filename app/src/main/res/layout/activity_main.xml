@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.tools.com/tools"
+    xmlns:tools2="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#F9F9FC"
@@ -190,4 +191,18 @@
         app:layout_constraintTop_toBottomOf="@+id/cardPainelCentral"
         app:layout_constraintVertical_bias="0.8"/>
 
+    <Button
+        android:id="@+id/btnIrParaCadastro"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Gerenciar Palavras"
+        android:backgroundTint="#4A3780"
+        android:textColor="#FFFFFF"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:layout_marginBottom="32dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnIniciar" />
 </androidx.constraintlayout.widget.ConstraintLayout>
